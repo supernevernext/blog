@@ -1,0 +1,167 @@
+---
+title: webpack
+categories:
+  - 前端
+tags:
+- tool
+- webpack
+date: 2016-08-22 09:48:42
+---
+webpack是近期最火的一款模块加载器兼打包工具,在 Webpack 当中, 所有的资源都被当作是模块, js, css, 图片等等..
+因此, Webpack 当中 js 可以引用 css, css 中可以嵌入图片 dataUrl
+<!--more -->
+# 安装
+用 npm 安装 Webpack：
+```bash
+npm install webpack -g
+```
+此时 Webpack 已经安装到了全局环境下，可以通过命令行 `webpack -h` 试试。
+通常我们会将 Webpack 安装到项目的依赖中，这样就可以使用项目本地版本的 Webpack。
+```bash
+# 进入项目目录
+# 确定已经有 package.json，没有就通过 npm init 创建
+# 安装 webpack 依赖
+npm install webpack --save-dev
+```
+# 配置
+每个项目下都必须配置有一个 `webpack.config.js` ，它的作用如同常规的 gulpfile.js/Gruntfile.js ，就是一个配置项，告诉 webpack 它需要做什么。
+下面看一下我写的一个基本配置：
+```bash
+var webpack = require('webpack');
+var path = require('path');
+var commonsPlugin = new webpack.optimize.CommonsChunkPlugin('common.js');
+module.exports = {
+	
+    //页面入口文件配置
+	entry:path.resolve(__dirname,'app/js/entry.js'),
+	//入口文件输出配置
+	output:{
+	// path:__dirname,
+	filename:path.resolve(__dirname,'dist/js/bundle.js')
+	},
+	module:{
+		//加载器配置
+		loaders:[
+			{
+				test:/\.css$/,loader:'style!css'
+			}
+		]
+	},
+	//插件项
+	plugins:[
+		commonsPlugin,
+		new webpack.BannerPlugin('This file is created by supernever')
+	]
+}
+```
+## plugins 是插件项
+这里我们使用了一个 CommonsChunkPlugin 的插件，它用于提取多个入口文件的公共脚本部分，然后生成一个 common.js 来方便多页面之间进行复用。BannerPlugin则是在生成文件加上注释。
+## entry 是页面入口文件配置output 是对应输出项配置
+语法大致为：
+```bash
+{
+    entry: {
+        page1: "./page1",
+        //支持数组形式，将加载数组中的所有模块，但以最后一个模块作为输出
+        page2: ["./entry1", "./entry2"]
+    },
+    output: {
+        path: "dist/js/page",
+        filename: "[name].bundle.js"
+    }
+}
+```
+该段代码最终会生成一个 page1.bundle.js 和 page2.bundle.js，并存放到 ./dist/js/page 文件夹下。
+## module.loaders 是最关键的一块配置
+Webpack 本身只能处理 `JavaScript` 模块，如果要处理其他类型的文件，就需要使用 loader 进行转换。
+Loader 可以理解为是模块和资源的转换器，它本身是一个函数，接受源文件作为参数，返回转换的结果。这样，我们就可以通过 require 来加载任何类型的模块或文件，比如 CoffeeScript、 JSX、 LESS 或图片。
+### loader特性
+- Loader 可以通过管道方式链式调用，每个 loader 可以把资源转换成任意格式并传递给下一个 loader ，但是最后一个 loader 必须返回 JavaScript。
+- Loader 可以同步或异步执行。
+- Loader 运行在 node.js 环境中，所以可以做任何可能的事情。
+- Loader 可以接受参数，以此来传递配置项给 loader。
+- Loader 可以通过文件扩展名（或正则表达式）绑定给不同类型的文件。
+- Loader 可以通过 npm 发布和安装。除了通过 package.json 的 main 指定，通常的模块也可以导出一个 loader 来使用。
+- Loader 可以访问配置。
+- 插件可以让 loader 拥有更多特性。
+- Loader 可以分发出附加的任意文件。
+
+按照惯例，而非必须，loader 一般以 `xxx-loader` 的方式命名，xxx 代表了这个 loader 要做的转换功能，比如 json-loader。
+
+在引用 loader 的时候可以使用全名 json-loader，或者使用短名 json。这个命名规则和搜索优先级顺序在 webpack 的 resolveLoader.moduleTemplates api 中定义。
+```bash
+Default: ["*-webpack-loader", "*-web-loader", "*-loader", "*"]
+```
+### 安装 loader
+```bash
+npm install css-loader style-loader
+```
+### 使用loader
+```bash
+module:{
+		//加载器配置
+		loaders:[
+			//.css 文件使用 style-loader 和 css-loader 来处理
+            { test: /\.css$/, loader: 'style-loader!css-loader' },
+            //.js 文件使用 jsx-loader 来编译处理
+            { test: /\.js$/, loader: 'jsx-loader?harmony' },
+            //.scss 文件使用 style-loader、css-loader 和 sass-loader 来编译处理
+            { test: /\.scss$/, loader: 'style!css!sass?sourceMap'},
+            //图片文件使用 url-loader 来处理，小于8kb的直接转为base64
+            { test: /\.(png|jpg)$/, loader: 'url-loader?limit=8192'}
+		]
+	},
+```
+如上，"-loader"其实是可以省略不写的，多个loader之间用“!”连接起来
+### 查看更多loader
+[查看更多就戳我](http://webpack.github.io/docs/list-of-loaders.html)
+# 使用webpack
+webpack 的执行也很简单，直接执行
+```bash
+webpack --display-error-details
+```
+即可，后面的参数`--display-error-details`是推荐加上的，方便出错时能查阅更详尽的信息（比如 webpack 寻找模块的过程），从而更好定位到问题。
+其他主要的参数有:
+```bash
+
+webpack --config XXX.js   //使用另一份配置文件（比如webpack.config2.js）来打包
+
+webpack --watch   //监听变动并自动打包
+
+webpack -p    //压缩混淆脚本，这个非常非常重要！
+
+webpack -d    //生成map映射文件，告知哪些模块被最终打包到哪里了
+```
+# 模块引入
+## HTML
+直接在页面引入 webpack 最终生成的页面脚本即可
+```bash
+<html>
+<head>
+  <meta charset="utf-8">
+</head>
+<body>
+  <script src="dist/js/bundle.js"></script>
+</body>
+</html>
+```
+## JS
+直接采用require方式引入即可：
+```bash
+require("../css/style.css");
+document.write('It works.<br />')
+document.write(require('./module.js'))
+```
+至此，简单的webpack使用就已经结束了。	
+
+
+
+
+
+
+
+
+
+
+
+

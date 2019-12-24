@@ -1,0 +1,147 @@
+---
+title: node_assert
+date: 2017-03-28 09:48:40
+tags:
+- nodejs
+- assert
+---
+简单介绍一下assert 
+<!--more-->
+- assert(value[,message])
+```bash
+const assert = require('assert');
+
+assert(true);
+// 通过
+assert(1);
+// 通过
+assert(false);
+// 抛出 "AssertionError: false == true"
+assert(0);
+// 抛出 "AssertionError: 0 == true"
+assert(false, '不是真值');
+// 抛出 "AssertionError: 不是真值"
+```
+
+- assert(actual,expected[,message])
+
+**只比较可枚举的自身属性。 deepEqual() 不比较对象的原型、连接符、或不可枚举的属性。 这可能会导致一些意料之外的结果。**
+```bash
+const assert = require('assert');
+
+const obj1 = {
+  a : {
+    b : 1
+  }
+};
+const obj2 = {
+  a : {
+    b : 2
+  }
+};
+const obj3 = {
+  a : {
+    b : 1
+  }
+};
+const obj4 = Object.create(obj1);
+
+assert.deepEqual(obj1, obj1);
+// 通过，对象与自身相等
+
+assert.deepEqual(obj1, obj2);
+// 抛出 AssertionError: { a: { b: 1 } } deepEqual { a: { b: 2 } }
+// b 的值不同
+
+assert.deepEqual(obj1, obj3);
+// 通过，两个对象相等
+
+assert.deepEqual(obj1, obj4);
+// 抛出 AssertionError: { a: { b: 1 } } deepEqual {}
+// 原型会被忽略
+```
+- assert.notDeepEqual(actual,expected[,message])
+
+**测试是否不深度相等。 与 assert.deepEqual() 相反。**
+
+```bash
+const assert = require('assert');
+
+const obj1 = {
+  a : {
+    b : 1
+  }
+};
+const obj2 = {
+  a : {
+    b : 2
+  }
+};
+const obj3 = {
+  a : {
+    b : 1
+  }
+};
+const obj4 = Object.create(obj1);
+
+assert.notDeepEqual(obj1, obj1);
+// 抛出 AssertionError: { a: { b: 1 } } notDeepEqual { a: { b: 1 } }
+
+assert.notDeepEqual(obj1, obj2);
+// 通过，obj1 与 obj2 不深度相等
+
+assert.notDeepEqual(obj1, obj3);
+// 抛出 AssertionError: { a: { b: 1 } } notDeepEqual { a: { b: 1 } }
+
+assert.notDeepEqual(obj1, obj4);
+// 通过，obj1 与 obj4 不深度相等
+```
+
+
+- assert.deepStrictEqual(actual,expected[,message])
+
+**大多数情况下与 assert.deepEqual() 一样，但有两个例外。 首先，原始值使用全等运算符（===）比较。 其次，对象的比较包括检查它们的原型是否全等。**
+
+```bash
+const assert = require('assert');
+
+assert.deepEqual({a:1}, {a:'1'});
+// 通过，因为 1 == '1'
+
+assert.deepStrictEqual({a:1}, {a:'1'});
+// 抛出 AssertionError: { a: 1 } deepStrictEqual { a: '1' }
+// 因为 1 !== '1' 使用全等运算符
+```
+
+- assert.notDeepStrictEqual(actual,expected[,message])
+
+```bash
+const assert = require('assert');
+
+assert.notDeepEqual({a:1}, {a:'1'});
+// 抛出 AssertionError: { a: 1 } notDeepEqual { a: '1' }
+
+assert.notDeepStrictEqual({a:1}, {a:'1'});
+// 通过
+```
+
+
+- assert.equal(actual,expected[,message])
+
+**使用相等运算符（==）测试 actual 参数与 expected**
+```bash
+const assert = require('assert');
+
+assert.equal(1, 1);
+// 通过，1 == 1
+assert.equal(1, '1');
+// 通过，1 == '1'
+
+assert.equal(1, 2);
+// 抛出 AssertionError: 1 == 2
+assert.equal({a: {b: 1}}, {a: {b: 1}});
+// 抛出 AssertionError: { a: { b: 1 } } == { a: { b: 1 } }
+```
+
+
+
